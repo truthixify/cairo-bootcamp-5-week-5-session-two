@@ -450,16 +450,16 @@ contract.emit_event();
 
 ## Debugging Tips
 
-1. Use `-vvv` to see execution traces for failing tests
+1. Use `--trace-verbosity detailed` to see execution traces for failing tests
 2. Set `SNFORGE_BACKTRACE=1` for panic locations
-3. Add `println!` statements (requires `-vv` flag)
-4. Check gas usage in test output to identify expensive operations
-5. Use `#[ignore]` to isolate problematic tests
-6. Use `--exit-first` to stop on first failure
-7. Check contract deployment with `declare` errors carefully
-8. Verify constructor arguments match contract expectations
-9. Use `spy_events()` to debug event emissions
-10. Test cheatcodes in isolation to verify behavior
+3. Check gas usage with `--detailed-resources` to identify expensive operations
+4. Use `#[ignore]` to isolate problematic tests
+5. Use `--exit-first` to stop on first failure
+6. Check contract deployment with `declare` errors carefully
+7. Verify constructor arguments match contract expectations
+8. Use `spy_events()` to debug event emissions
+9. Test cheatcodes in isolation to verify behavior
+10. Use `--gas-report` for detailed gas breakdown per contract and selector
 
 ## Test Patterns
 
@@ -660,24 +660,53 @@ fn test_reentrancy_protection() {
 ```
 
 ### Fork Testing
-```cairo
-// In Scarb.toml:
-// [[tool.snforge.fork]]
-// name = "mainnet"
-// url = "https://starknet-mainnet.public.blastapi.io"
-// block_id.number = "123456"
 
-use snforge_std::fork;
+Fork testing allows you to test against real blockchain state from a specific network and block.
+
+#### Configuration in Scarb.toml
+```toml
+[[tool.snforge.fork]]
+name = "sepolia"
+url = "https://starknet-sepolia.public.blastapi.io"
+block_id.number = "500000"
+
+# Or use block hash
+# block_id.hash = "0x123..."
+
+# Or use block tag (may have issues with preconfirmed blocks)
+# block_id.tag = "latest"
+```
+
+#### Fork Test Example
+```cairo
+// No special imports needed - just use the #[fork] attribute
 
 #[test]
-#[fork("mainnet")]
-fn test_on_fork() {
-    // Test against mainnet state at block 123456
-    let token = ITokenDispatcher { contract_address: MAINNET_TOKEN_ADDRESS };
-    let balance = token.balance_of(SOME_ADDRESS);
-    assert(balance > 0, 'Should have balance');
+#[fork("sepolia")]
+fn test_with_real_token() {
+    let contract = deploy_contract();
+    
+    // Interact with real deployed contracts on Sepolia
+    let strk_token: ContractAddress = STRK_TOKEN_ADDRESS.try_into().unwrap();
+    let token_dispatcher = IERC20Dispatcher { contract_address: strk_token };
+    
+    // Admin approves contract
+    start_cheat_caller_address(strk_token, ADMIN);
+    token_dispatcher.approve(contract.contract_address, 1000);
+    stop_cheat_caller_address(strk_token);
+    
+    // Test with real token state
+    let balance = token_dispatcher.balance_of(ADMIN);
+    assert(balance > 0, 'Admin should have tokens');
 }
 ```
+
+#### Fork Testing Best Practices
+- Use specific block numbers instead of "latest" to avoid preconfirmed block issues
+- Fork tests interact with real contract state at the specified block
+- You can use cheatcodes to manipulate caller addresses and other state
+- Fork tests are slower than unit tests - use sparingly
+- Good for testing integrations with existing deployed contracts
 
 ## Reference
 
