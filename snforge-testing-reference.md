@@ -27,17 +27,21 @@ Test collection rules:
 ```bash
 # Run all tests
 snforge test
+# or with scarb
+scarb test
 
 # Run specific test
 snforge test test_name
+scarb test test_name
 
 # Filter by pattern
 snforge test transfer
+scarb test transfer
 
-# Show detailed output
-snforge test -vv          # console output
-snforge test -vvv         # + failing traces
-snforge test -vvvv        # + all traces
+# Show detailed output (note the -- separator for snforge)
+snforge test -- --trace-verbosity detailed
+# or with scarb (configured in Scarb.toml)
+scarb test -- --trace-verbosity detailed
 
 # Run ignored tests
 snforge test --ignored
@@ -45,9 +49,6 @@ snforge test --include-ignored
 
 # Backtrace on failure
 SNFORGE_BACKTRACE=1 snforge test
-
-# Run single test file
-snforge test --path tests/integration_test.cairo
 
 # Run tests in parallel (default)
 snforge test
@@ -57,9 +58,29 @@ snforge test --max-n-steps 1000000
 
 # Exit on first failure
 snforge test --exit-first
+snforge test -x
 
 # Show gas usage
 snforge test --detailed-resources
+
+# Gas breakdown report
+snforge test --gas-report
+
+# Skip specific tests
+snforge test --skip test_name
+
+# Exact match for test filter
+snforge test -e test_exact_name
+
+# Run tests for specific package
+snforge test -p package_name
+
+# Rerun failed tests
+snforge test --rerun-failed
+
+# Note: When using snforge directly, some flags need -- separator
+# Example: snforge test -- --trace-verbosity detailed
+# With scarb test, behavior depends on Scarb.toml configuration
 ```
 
 ## Assertion Patterns
