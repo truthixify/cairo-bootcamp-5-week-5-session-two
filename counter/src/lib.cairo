@@ -9,12 +9,15 @@ pub trait ICounter<TContractState> {
 
 #[starknet::contract]
 pub mod Counter {
+    use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
     use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
     use starknet::{ContractAddress, get_caller_address, get_contract_address};
-    use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
 
     // STRK token address on Starknet
-    const STRK_TOKEN: ContractAddress = 0x04718f5a0Fc34cC1AF16A1cdee98fFB20C31f5cD61D6Ab07201858f4287c938D.try_into().unwrap();
+    const STRK_TOKEN: ContractAddress =
+        0x04718f5a0Fc34cC1AF16A1cdee98fFB20C31f5cD61D6Ab07201858f4287c938D
+        .try_into()
+        .unwrap();
 
     #[storage]
     struct Storage {
@@ -92,7 +95,6 @@ pub mod Counter {
                 let reward = self.reward_amount.read();
 
                 if reward > 0 {
-                    
                     let token_dispatcher = IERC20Dispatcher { contract_address: STRK_TOKEN };
 
                     // Transfer reward to winner
@@ -114,7 +116,7 @@ pub mod Counter {
             assert(amount > 0, 'Amount must be positive');
 
             // Transfer STRK from admin to contract
-            
+
             let token_dispatcher = IERC20Dispatcher { contract_address: STRK_TOKEN };
             let this_contract = get_contract_address();
 
